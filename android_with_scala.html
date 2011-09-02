@@ -27,6 +27,7 @@
     <script type="text/javascript" src="highlighter/shBrushJScript.js"></script>
     <script type="text/javascript" src="highlighter/shBrushRuby.js"></script>
     <script type="text/javascript" src="highlighter/shBrushScala.js"></script>
+    <script type="text/javascript" src="highlighter/shBrushBash.js"></script>
     <!-- Syntax highlighting styles-->
     <link type="text/css" rel="stylesheet" href="stylesheet/shCore.css"/>
     <link type="text/css" rel="stylesheet" href="stylesheet/shThemeEmacs.css"/>
@@ -75,12 +76,509 @@
         <li class="incremental">職業 : SIer, COBOL-er, Excel-er, いろいろ…</li>
         <li class="incremental">趣味 : 読書、音楽、プログラミング</li>
         <li class="incremental">興味(ソフトウェア) Ruby, Rails, Scala, Play!, ...</li>
-        <li class="incremental">興味(ハードウェア) Sony Reader, ThinkPad, Happy Hacking Keyboard, ...</li>
+        <li class="incremental">興味(ハードウェア) Sony Reader, Xperia, ThinkPad, Happy Hacking Keyboard, ...</li>
         
       </ul>
     </div>
 
+    <div class="slide">
+      <h2>なぜ Scala なのか!？</h2>
+      <ul>
+        <li class="incremental">Java 嫌い (いきなり disったよ (ﾟ-ﾟ；))</li>
+        <li class="incremental">時代は関数型言語ですね</li>
+        <li class="incremental">どうやら Java より Scala の方が簡潔に書けるらしいぞ。</li>
+        <li class="incremental">参考
+          <a href="http://www.slideshare.net/papamitra/scalaandroid">
+            Scala で Android 開発</a> </li>
+      </ul>
+    </div>
 
-  </body>
+    <div class="slide">
+      <h2>簡潔に…</h2>
+      <h3>before (Java)</h3>
+      <div class="incremental">
+      <pre class="brush: java">
+        Button button = (Button)findViewById(R.id.Button01);
+        button.setOnClickListner(new OnClickListener {
+          public void OnClick(View v) {
+             // むにゃむにゃ
+          }
+        });
+      </pre>
+      </div>
+      <h3>after (Scala)</h3>
+      <div class="incremental">
+      <pre class="brush: scala">
+        findView(TR.Button01).setOnClickListener( () => {
+          // むにゃむにゃ
+        })
+      </pre>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>あら素敵。キャストが不要なのね。</h2>
+    </div>
+
+    <div class="slide">
+      <h2>簡潔に…</h2>
+      <h3>before (Java)</h3>
+      <div class="incremental">
+      <pre class="brush: java">
+        public static void useAlarms() {
+          Cursor cur = getAlarmsCursor();
+          if (cur.moveToFirst()) {
+            do {
+              Alarm alarm = new Alarm(cur);
+              // ほげほげ
+            } while (cur.moveToNext());
+          }
+          cur.close();
+        }
+      </pre>
+      </div>
+      <h3>after (Scala)</h3>
+      <div class="incremental">
+      <pre class="brush: scala">
+        def useAlarms() { using(getAlarmsCursor()) { c =>
+            c.map(new Alarm(_)).foreach(alarm => {
+               // ほげほげ
+            })
+        } }
+      </pre>
+      </div>
+    </div>
+    
+    <div class="slide">
+      <h2>あら素敵。リソースを自動的に開放してくれるのね。</h2>
+    </div>
+
+    <div class="slide">
+      <h2>だんだん使ってみたくなってきましたね。</h2>
+    </div>
+
+    <div class="slide">
+      <h2>導入方法</h2>
+      <h3>前提</h3>
+      <ul>
+        <li class="incremental">前提は Ubuntu 11.04 です(私の環境)</li>
+        <li class="incremental">Mac は使ったことないのでわかりません。きっと同じような感じ</li>
+        <li class="incremental">Windows は使ったことあるけどわかりません。きっと同じようには動きません</li>
+        <li class="incremental">JDK は 1.6.x がインストール済みとします</li>
+      </ul>
+    </div>
+
+    <div class="slide">
+      <h2>導入方法</h2>
+      <h3>段取り</h3>
+      <ol>
+        <li>Android SDK の導入</li>
+        <li>AVD(Android Virtual Device)の作成</li>
+        <li>sbt(Simple Build Tool)の導入</li>
+        <li>conscript の導入</li>
+        <li>giter8 の導入</li>
+        <li>template の作成</li>
+        <li>エミュレータ実行</li>
+        <li>実機で実行</li>
+      </ul>
+    </div>
+
+    <div class="slide">
+      <h2>1. Android SDK の導入</h2>
+      <p class="incremental">android sdk でググって下さい。</p>
+      <p class="incremental">…あまりに不親切か</p>
+      <p class="incremental">
+        <a href="http://developer.android.com/sdk/index.html">この辺</a>
+      </p>
+      <p class="incremental">android-sdk_r12-linux_x86.tgz をダウンロード</p>
+      <p class="incremental">適当な場所に解凍(例 : ~/android-sdk-linx_x86/ とか)</p>
+      <p class="incremental">解凍した場所を $ANDROID_HOME とし、
+        $ANDROID_HOME/tools, $ANDROID_HOME/platform-tools に PATH を通しておくといいよ</p>
+    </div>
+
+    <div class="slide">
+      <h2>1. Android SDK の導入</h2>
+      <p class="incremental">以上で導入終わりかと言うとそんなことは全然ない</p>
+      <p class="incremental">本当の SDK 導入はこれからだ！</p>
+      <p class="incremental">$ANDROID_HOME/tools/android を起動して下さい</p>
+      <p class="incremental">Available packages から必要なファイルを選択してインストール</p>
+      <p class="incremental">
+        Xperia の人は SDK Platform 2.1 を、Galaxy S II の人は 2.3 を、
+        といった風に適当にそれっぽい SDK を選ぶ。
+      </p>
+    </div>
+
+    <div class="slide">
+      <h2>2. AVD (Android Virtual Device) の作成</h2>
+      <p class="incremental">まだ AVD マネージャーを起動していますか？終了してしまった人はもう一度起動。</p>
+      <p class="incremental">次にテストに必要となるエミュレータを用意します</p>
+      <p class="incremental">AVD マネージャーのメニューで Virtual devices を選ぶと、まだ何もないのでここに作ります</p>
+      <p class="incremental">いくつでも作れるけど、とりあえず 1コだけ作れば確認はできる</p>
+      <p class="incremental">オプションとかわかんねぇから適当で、後で困ったら考える</p>
+      <p class="incremental">「Start...」ボタンでエミュレータが起動したらとりあえず成功</p>
+    </div>
+
+    <div class="slide">
+      <h2>3. sbt(Simple Build Tool)の導入</h2>
+      <p class="incremental">やっと Scala の導入です</p>
+      <p class="incremental">ここでは sbt というツールと共にインストールする方法を紹介します</p>
+      <p class="incremental">まずは
+        <a href="http://code.google.com/p/simple-build-tool/wiki/Setup">ここ</a>から
+        sbt-launch-0.7.7.jar をダウンロード
+      </p>
+      <p class="incremental">
+        んで、起動スクリプトを書いて PATH の通った所に置く。wiki に書いてあるまんま
+        <div class="incremental">
+        <pre class="brush: bash">
+          java -Xmx1536M -Xss1M -XX:MaxPermSize=256m \
+               -XX:+CMSClassUnloadingEnabled \
+               -jar `dirname $0`/sbt-launch-0.7.7.jar "$@"
+        </pre>
+        </div>
+      </p>
+      <p class="incremental">CMSClassUnloadingEnabled とか MaxPermSize とか指定しとかないと落ちるよ</p>
+      <p class="incremental">
+        sbt の最新バージョンは 0.10.0 ですが、続いて紹介する android_plugin がうまく動かなかったので、
+        ここでは一つ前のバージョン 0.7.7 を使用します。
+      </p>
+
+    </div>
+
+    <div class="slide">
+      <h2>3. sbt(Simple Build Tool)の導入</h2>
+      <h3>稼動確認を兼ねた超入門</h3>
+      <p class="incremental">ホームディレクトリにプロジェクト用のディレクトリを作成しましょう。例えば hello</p>
+      <div class="incremental">
+      <pre class="box">
+        $ mkdir hello
+        $ cd hello
+      </pre>
+      </div>
+      <p class="incremental">ここで sbt を実行</p>
+      <div class="incremental">
+      <pre class="box">
+        $ sbt
+        Project does not exist, create new project? (y/N/s)
+      </pre>
+      </div>
+      <p class="incremental">て聞かれるから、y と答える</p>
+      <div class="incremental">
+      <pre class="box">
+        Name: hello
+        Organization: com.sample.kokou
+        Version [1.0]:
+        Scala version [2.9.0]: 2.9.1
+        sbt version [0.7.7]:
+      </pre>
+      </div>
+      <p class="incremental">て適当に答える</p>
+      <p class="incremental">Scala は最近 2.9.1 がリリースされたよ。</p>
+      <p class="incremental">sbt のバージョンはそのままにしておいて下さい。</p>
+      
+    </div>
+
+    <div class="slide">
+      <div class="incremental">
+      <pre class="box">
+Getting net.java.dev.jna jna 3.2.3 ...
+:: retrieving :: org.scala-tools.sbt#boot-app
+	confs: [default]
+(中略)
+[success] Successfully initialized directory structure.
+Getting Scala 2.9.1 ...
+downloading http://repo1.maven.org/maven2/org/scala-lang/scala-compiler/2.9.
+	[SUCCESSFUL ] org.scala-lang#scala-compiler;2.9.1!scala-compiler.jar
+downloading http://repo1.maven.org/maven2/org/scala-lang/scala-library/2.9.1
+	[SUCCESSFUL ] org.scala-lang#scala-library;2.9.1!scala-library.jar (
+downloading http://repo1.maven.org/maven2/org/scala-lang/jline/2.9.1/jline-2
+	[SUCCESSFUL ] org.scala-lang#jline;2.9.1!jline.jar (379ms)
+:: retrieving :: org.scala-tools.sbt#boot-scala
+	confs: [default]
+	4 artifacts copied, 0 already retrieved (19939kB/40ms)
+[info] Building project hello 1.0 against Scala 2.9.1
+[info]    using sbt.DefaultProject with sbt 0.7.7 and Scala 2.7.7
+      </pre>
+      </div>
+      <p class="incremental">…できた</p>
+    </div>
+
+    <div class="slide">
+      <h2>とりあえず hello world</h2>
+      <p class="incremental">
+        hello/src/main/scala というディレクトリが作られてるから、そこに hello.scala 作成
+      </p>
+      <div class="incremental">
+        <pre class="brush: scala">
+          object Hello { 
+            def main(args: Array[String]) { 
+              println("hello world")
+            }
+          }
+        </pre>
+      </div>
+      <p class="incremental">雰囲気わかるよね</p>
+      <p class="incremental">
+        sbt でプロジェクトを作成した直後の状態であれば素気ないプロンプトが表示されてるはず
+      </p>
+      <div class="incremental">
+      <pre class="box">
+        > compile
+        (中略)
+[info] == compile ==
+[success] Successful.
+[info] 
+[info] Total time: 12 s, completed 2011/09/02 0:37:48
+      </pre>
+      </div>
+    </div>
+
+    <div class="slide">
+      <p>んで実行</p>
+      <div class="incremental">
+      <pre class="box">
+        > run
+        (中略)
+[info] == run ==
+[info] Running Hello 
+hello world
+[info] == run ==
+[success] Successful.
+[info] 
+[info] Total time: 0 s, completed 2011/09/02 0:39:10
+      </pre>
+      </div>
+      <p class="incremental">確認終わり</p>
+
+    </div>
+
+    <div class="slide">
+      <h2>4. conscriptの導入</h2>
+      <p class="incremental">Conscript とは何か？</p>
+      <p class="incremental">
+        この次に導入する giter8 のために必要なだけなので気にしない ┐(´д｀)┌
+      </p>
+    </div>
+
+    <div class="slide">
+      <h2>4. conscriptの導入</h2>
+      <h3>インストール方法</h3>
+      <p class="incremental">
+        <a href="https://github.com/n8han/conscript">ここ</a>から conscript-0.3.1.jar を入手
+      </p>
+      <p class="incremental">
+        んで実行
+        <div class="incremental">
+        <pre class="box">
+          $ java -jar conscript-0.3.1.jar
+        </pre>
+        </div>
+      </p>
+      <p class="incremental">
+        すると、~/bin/cs が勝手にインストールされます。
+        インストール先の変更方法はわかりません。
+      </p>
+      <div class="incremental">
+        <pre class="box">
+          $ cs --version
+Usage: cs [options] [<user>/<project>[/<version>]]
+
+  --clean-boot
+        clears boot dir
+  --setup
+        installs sbt launcher
+  -b <value> | --branch <value>
+        github branch (default: master)
+  --version
+        print current version
+  [<user>/<project>[/<version>]]
+        github project
+        </pre>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>5. giter8の導入</h2>
+      <h3 class="incremental">giter8 とは</h3>
+      <p class="incremental">
+        github に色んな人が sbt プロジェクトのサンプルを公開しています。
+      </p>
+      <p class="incremental">
+        中には giter8 用に公開してくれている人もいて、
+        これを我々は拝借することで初回導入のハードルを下げることができるのです。
+      </p>
+    </div>
+
+    <div class="slide">
+      <h2>5. giter8の導入</h2>
+      <h3>インストール方法</h3>
+      <div class="incremental">
+        <pre class="box">
+          $ cs n8han/giter8
+        </pre>
+      </div>
+      <p class="incremental">以上！</p>
+    </div>
+    
+    <div class="slide">
+      <h2>6. Template の作成</h2>
+      <h3>giter8 の動作確認も兼ねて</h3>
+      <p class="incremental">まずは利用可能なテンプレートを確認する</p>
+      <div class="incremental">
+        <pre class="box">
+          $ g8 --list | grep android
+charroch/android                        
+gseitz/android-sbt-project              A g8 template project for android de
+velopment
+        </pre>
+      </div>
+      <p class="incremental">
+        gseitz/android-sbt-project が求めていたテンプレートです
+      </p>
+      <p class="incremental">
+        <a href="https://github.com/jberkel/android-plugin">android-pluginのサイト</a>に
+        jberkel/android-app がテンプレートとして紹介されているけど、うまく行きませんでした。
+      </p>
+    </div>
+    
+    <div class="slide">
+      <h2>6. Template の作成</h2>
+      <p class="incremental">テンプレートを元にプロジェクトを作成</p>
+      <div class="incremental">
+        <pre class="box">
+          $ g8 gseitz/android-sbt-project
+Creates an Android SBT  project. 
+
+platform [4]: 7
+package [my.android.project]: 
+name [My Android Project]: Hello
+
+Applied gseitz/android-sbt-project.g8 in hello
+        </pre>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>6. Template の作成</h2>
+      <div class="incremental">
+        <pre class="box">
+          $ cd hello
+          $ less src/main/scala/Activity.scala
+package my.android.project
+
+import _root_.android.app.Activity
+import _root_.android.os.Bundle
+import _root_.android.widget.TextView
+
+class MainActivity extends Activity {
+  override def onCreate(savedInstanceState: Bundle) {
+    super.onCreate(savedInstanceState)
+    setContentView(new TextView(this) {
+      setText("hello, world")
+    })
+  }
+}
+        </pre>
+      </div>
+      <p class="incremental">テンプレートだから、もう hello world ができてる</p>
+    </div>
+
+    <div class="slide">
+      <h2>7. エミュレータ実行</h2>
+      <p class="incremental">じゃあコンパイル</p>
+      <div class="incremental">
+        <pre class="box">
+$ sbt
+(中略)
+[info] Building project Hello 0.1 against Scala 2.8.1
+[info]    using Parent with sbt 0.7.4 and Scala 2.7.7
+> compile
+(中略)
+[success] Successful.
+[info] 
+[info] Total time: 10 s, completed 2011/09/02 22:32:48
+        </pre>
+      </div>
+    </div>
+
+    <div class="slide">
+      <h2>7. エミュレータ実行</h2>
+      <p class="incremental">最初の辺で作成した AVD を起動</p>
+      <div class="incremental">
+        <pre class="box">
+$ $ANDROID_HOME/tools/emulator -avd Xperia &
+        </pre>
+      </div>
+      <p class="incremental">
+        sbt 上で start-emulator したら起動しそうな気がしたけどダメだった。
+      </p>
+      <p class="incremental">エミュレータにインストール</p>
+      <div class="incremental">
+        <pre class="box">
+$ sbt
+> install-emulator
+(いろいろエラーが出るけど気にしない)
+[info] == Hello / install-emulator ==
+[info] == Hello / install-emulator ==
+[success] Successful.
+[info] 
+[info] Total time: 7 s, completed 2011/09/02 22:42:39
+        </pre>
+      </div>
+      <p class="incremental">
+        エミュレータのメニューに Hello が追加されていれば成功です
+      </p>
+    </div>
+
+    <div class="slide">
+      <h2>8. 実機で実行</h2>
+      <p class="incremental">もちろん Android 機、持ってますね</p>
+      <p class="incremental">
+        <a href="http://developer.android.com/guide/developing/device.html">この辺</a>のガイドに従って、udev のルールを追加して下さい。(Ubuntu 前提であることを今、思い出した)
+      </p>
+      <p class="incremental">Xperia の人は /etc/udev/rules.d/51-android.rules をこんな感じで作成</p>
+      <div class="incremental">
+        <pre class="box">
+SUBSYSTEM=="usb", ATTR{idVendor}=="0fce", MODE="0666", GROUP="plugdev" 
+        </pre>
+      </div>
+      <p class="incremental">Xperia でない人は "0fce"の辺を適当に変更して下さい。</p>
+      <p class="incremental">
+        USBケーブルで Android 機を PC に接続、USBデバッグモード＆提供元不明のアプリのインストールを許可しておきます
+      </p>
+      <div class="incremental">
+        <pre class="box">
+$ $ANDROID_HOME/platform-tools/adb devices
+List of devices attached 
+CB511K8F6D	device
+        </pre>
+      </div>
+      <p class="incremental">な風で認識できていることを確認</p>
+    </div>
+
+    <div class="slide">
+      <h2>8. 実機で実行</h2>
+      <p class="incremental">
+        実機にインストール
+      </p>
+      <div class="incremental">
+        <pre class="box">
+$ sbt
+(中略)
+> install-device
+(やっぱり色々エラーが出るけど無視)
+[info] == Hello / install-device ==
+[info] == Hello / install-device ==
+[success] Successful.
+[info] 
+[info] Total time: 9 s, completed 2011/09/02 23:06:21
+        </pre>
+      </div>
+      <p class="incremental">インストールできましたか？</p>
+    </div>
+
+    <div class="slide">
+      <h2>おつかれさまでした</h2>
+    </div>
+</body>
 
 </html>
